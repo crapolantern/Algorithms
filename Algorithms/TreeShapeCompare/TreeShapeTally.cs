@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace TreeShapeCompare
 {
-    class Program
+    class TreeShapeTally
     {
         /// <summary>
         /// Main method only handles IO concerns
@@ -25,7 +25,7 @@ namespace TreeShapeCompare
             int prototypes, length;
             string treeData;
 
-            //  A list of int arrays. Each int[] contains node positions for a tree. If a tree 
+            //  A list of tree data in the form of a string (see Tree.Positions)
             List<string> prototype_log = new List<string>();
 
             /*
@@ -75,10 +75,10 @@ namespace TreeShapeCompare
     }
 
     /// <summary>
-    /// A structure that stores nodes according to their value. The first object received is the
-    /// root (index 1), and all others "trickle down" underneath it. They can move downward to the 
-    /// left or right depending on if they are less than or greater than the parent node,
-    /// respectively. Every assignment to a position is permanent;
+    /// A structure that stores objects in a binary position according to their value. The first
+    /// object received is the root (index 1), and all others "trickle down" underneath it. They can
+    /// move downward to the left or right depending on if they are less than or greater than the
+    /// parent branch, respectively. Every assignment to a position is permanent.
     /// 
     /// Indexes are as follows:         Not all positions have to be taken though:
     ///          1                                            1
@@ -86,52 +86,39 @@ namespace TreeShapeCompare
     ///       2     3                                       2   3
     ///      / \   / \                                     /   /
     ///     4   5 6   7                                   4   6
-    /// This means that a node's parent will always be its index/2, and a node's child will be 2n if
-    /// its less, or 2n+1 if it's greater. Because of this, there's no need to link nodes to each
-    /// other; instead math is used to navigate the tree.
+    /// This means that a parent branch will always be its index/2, and a child branch will be twice
+    /// its index if it's less, or twice + 1 if it's greater. Because of this, math can be used to 
+    /// navigate the tree with low overhead.
     /// 
     /// This tree is not balanced, or balancing.
     /// </summary>
     class Tree
     {
-        private Node root;  //  The root node, starts every search
-        private Dictionary<int, Node> nodes = new Dictionary<int, Node>(); //  index => value
+        private Dictionary<int, int> branches = new Dictionary<int, int>(); //  index => value
 
         /// <summary>
         /// Finds where the given value should be located in the tree. It doesn't have to exist
         /// </summary>
         /// <param name="value">Value to search for</param>
-        /// <returns>The index of where the node should be located</returns>
+        /// <returns>The index of where the branch should be located</returns>
         public int Search(int value)
         {
-            Node n = root;
             int index = 1;
 
-            //  Continue looping until we reach a node that matches the value
-            while (n != null && n.value != value)
-            {
-                // Not found, trickle down. Current = child
-                index = ChildIndex(n, value);
-                if (!nodes.TryGetValue(index, out Node found))
-                    n = null;
-                else 
-                    n = found;
-            }
+            //  Continue trickling down until we reach a branch that matches the value
+            while (branches.TryGetValue(index, out int parent_value) && value != parent_value)
+                index = ChildIndex(index, parent_value, value);
 
             return index;
         }
 
         /// <summary>
-        /// Adds the value to the tree by searching for a fitting index and creating the node
+        /// Adds the value to the tree by searching for a fitting index and creating the branch
         /// </summary>
         /// <param name="value"></param>
         public void Add(int value)
         {
-            int index = Search(value);
-            nodes.Add(index, new Node(index, value));
-            
-            //  Now that we have at least 1 entry, set the root (never changes)
-            root = nodes[1];
+            branches.Add(Search(value), value);
         }
 
         /// <summary>
@@ -145,7 +132,7 @@ namespace TreeShapeCompare
         {
             string pos = "";
             //  Add the letter version of all indexes
-            foreach (int i in nodes.Keys)
+            foreach (int i in branches.Keys)
                 pos += ('z' + i);
 
             //  Return the alphabetized string
@@ -154,7 +141,7 @@ namespace TreeShapeCompare
 
         public void PrintTreePositions()
         {
-            foreach (int i in nodes.Keys)
+            foreach (int i in branches.Keys)
             {
                 Console.Write(i + " ");
             }
@@ -162,41 +149,24 @@ namespace TreeShapeCompare
 
         public void Clear()
         {
-            nodes = new Dictionary<int, Node>();
-            root = null;
+            branches = new Dictionary<int, int>();
         }
 
         /// <summary>
         /// Returns the index of the child based from a value comparison. The child doesn't have to
         /// exist.
         /// </summary>
-        /// <param name="parent">The parent node</param>
+        /// <param name="parent">The parent branch</param>
         /// <param name="child_value">The child's value</param>
         /// <returns>The child's index, if it exists</returns>
-        private int ChildIndex(Node parent, int child_value)
+        private int ChildIndex(int index, int parent_value, int child_value)
         {
             //  If the parent is greater, the child's index is 2(parent_index)
-            if (parent.value > child_value)
-                return parent.index * 2;
+            if (parent_value > child_value)
+                return index * 2;
 
             //  If the child is greater, the child's index is 2(parent_index) + 1
-            return (parent.index * 2) + 1;
-        }
-    }
-
-    class Node
-    {
-        // Public properties
-        public int index { get; }
-        public int value { get; }
-        /// <summary>
-        /// Constructor for a new node. Must already have chosen placement
-        /// </summary>
-        /// <param name="value"></param>
-        public Node(int index, int value)
-        {
-            this.value = value;
-            this.index = index;
+            return (index * 2) + 1;
         }
     }
 }
