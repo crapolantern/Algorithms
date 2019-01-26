@@ -104,16 +104,11 @@ namespace TreeShapeCompare
         public int Search(int value)
         {
             int index = 1;
+            int parent_value;
 
             //  Continue trickling down until we reach a branch that matches the value
-            try
-            {
-                while (branches[index] != value)
-                    index = ChildIndex(index, branches[index], value);
-            }
-            //  If there's an exception, it's because the dictionary doesn't have an entry for that
-            //  index. This means we found where the value is supposed to be; simply return it.
-            catch (Exception) { }
+            while (branches.TryGetValue(index, out parent_value) && value != parent_value)
+                index = ChildIndex(index, parent_value, value);
 
             return index;
         }
