@@ -10,7 +10,7 @@ namespace AnagramDetector
         [TestMethod]
         public void AllSame()
         {
-            AnagramDetector ad = 
+            MainDetector td = new TestableDetector();
         }
     }
 }
