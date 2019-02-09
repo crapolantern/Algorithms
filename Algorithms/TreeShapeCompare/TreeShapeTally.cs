@@ -92,7 +92,7 @@ namespace TreeShapeCompare
     /// 
     /// This tree is not balanced, or balancing.
     /// </summary>
-    class Tree
+    public class Tree
     {
         private Dictionary<int, int> branches = new Dictionary<int, int>(); //  index => value
 
@@ -122,30 +122,29 @@ namespace TreeShapeCompare
             branches.Add(Search(value), value);
         }
 
-        /// <summary>
-        /// Returns a sorted, lettered version of positions contained in a string. For example, if
-        /// there were tree positions stored on 1, 2, 3, and 7, it would return "ABCG" regardless of
-        /// the order they were fed to the tree. This is done so that they can be easily compared in
-        /// the future.
-        /// </summary>
-        /// <returns></returns>
+        //  TODO write the header
         public string Positions()
         {
-            string pos = "";
-            //  Add the letter version of all indexes
-            foreach (int i in branches.Keys)
-                pos += ('z' + i);
-
-            //  Return the alphabetized string
-            return String.Concat(pos.OrderBy(s => s));
-        }
-
-        public void PrintTreePositions()
-        {
+            string posReturn = "";
+            int[] pos = new int[branches.Count];
+            int index = 0;
+            
+            //  Add the letter version of all indexes & sort
             foreach (int i in branches.Keys)
             {
-                Console.Write(i + " ");
+                pos[index] = i;
+                index++;
             }
+            Array.Sort(pos);
+            
+            //  Generate a string description of the positions
+            for (int i = 0; i < pos.Length; i++)
+            {
+                posReturn += pos[i] + ".";
+            }
+
+            //  Return the alphabetized string
+            return posReturn;
         }
 
         public void Clear()
