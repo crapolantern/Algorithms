@@ -6,16 +6,16 @@ using System.Threading.Tasks;
 
 namespace BFS_RumorMill
 {
-    class Program
+    public class Program
     {
-        static Student[] students;
-        static Dictionary<string, int> index = new Dictionary<string, int>();//name -> obj
         /// <summary>
         /// Handles the IO portion of the algorithm, BFS actually does the computation
         /// </summary>
         /// <param name="args"></param>
         static void Main(string[] args)
         {
+            Student[] students;
+            Dictionary<string, int> index = new Dictionary<string, int>();  //  name -> obj
 
             //  Read number of students at school
             int num_students = int.Parse(Console.ReadLine());
@@ -52,28 +52,82 @@ namespace BFS_RumorMill
             }
 
             //  Print each report
+            RumorMill mill = new RumorMill();
             for (int i = 0; i < num_reports; i++)
             {
-                foreach (Student s in BFS(reports[i]))  //  Each report
-                    Console.Write(s.name + " ");        //  prints each name
-                Console.WriteLine();                    //  then endl
+                foreach (int stud in mill.BFS(students, reports[i])) //  Each report
+                    Console.Write(students[stud].name + " ");       //  prints each name
+                Console.WriteLine();                                //  then endl
             }
 
             Console.ReadLine();
         }
+    }
 
-        /// <summary>
-        /// For "Rumor Mill" problem, find out what order students discover school rumors shared by
-        /// a map (or graph) of friends
-        /// </summary>
-        /// <returns></returns>
-        static IEnumerable<Student> BFS (int start)
+    public class RumorMill
+    {
+        private Student[] students;
+        public IEnumerable<int> BFS(Student[] students, int start)
         {
-            
+            int size = students.Count();
+
+            //  Structures to track which students are placed at which distance
+            List<List<int>> distances = new List<List<int>>();
+            int[] dist = new int[size];
+
+            //  An array that tracks which students have been recorded
+            bool[] recorded = new bool[size];
+            for (int i = 0; i < size; i++)
+                recorded[i] = false;
+
+            //  Initiate rumor-maker
+            Queue<int> q = new Queue<int>();
+            q.Enqueue(start);
+
+            //  Record all connections
+            int distance;
+            while (q.Count > 0)
+            {
+                int current = q.Dequeue();
+                foreach (int i in students[current].friends)
+                {
+                    if (!recorded[i])
+                    {
+                        q.Enqueue(i);
+
+                        //  Declare a distance from the start, then record it
+                        if (current == start)
+                            distance = 0;
+                        else
+                            distance = dist[current] + 1;
+                        dist[i] = distance;
+
+                        //  Add new list at this index if necessary
+                        if (distances.Count == distance)
+                            distances.Add(new List<int>());
+                        distances[distance].Add(i);  //  Add the student in the index that equals its distance
+                        recorded[i] = true;
+                    }
+                }
+            }
+
+            //  Find all outsiders
+            List<int> outsiders = new List<int>();
+            for (int i = 0; i < size; i++)
+                if (!recorded[i])
+                    outsiders.Add(i);
+            distances.Add(outsiders);
+
+            foreach (List<int> dist_group in distances)
+            {
+                dist_group.Sort();
+                foreach (int i in dist_group)
+                    yield return i;
+            }
         }
     }
 
-    class Student
+    public class Student
     {
         public string name { get; }
         public List<int> friends { get; set; }
