@@ -72,17 +72,17 @@ namespace BFS_RumorMill
             int size = students.Count();
 
             //  Structures to track which students are placed at which distance
-            List<List<int>> distances = new List<List<int>>();
+            List<List<int>> table = new List<List<int>>();
             int[] dist = new int[size];
-
-            //  An array that tracks which students have been recorded
-            bool[] recorded = new bool[size];
             for (int i = 0; i < size; i++)
-                recorded[i] = false;
+                dist[i] = -1;
 
             //  Initiate rumor-maker
             Queue<int> q = new Queue<int>();
             q.Enqueue(start);
+            dist[start] = 0;
+            table.Add(new List<int>());
+            table[dist[start]].Add(start);
 
             //  Record all connections
             int distance;
@@ -91,22 +91,17 @@ namespace BFS_RumorMill
                 int current = q.Dequeue();
                 foreach (int i in students[current].friends)
                 {
-                    if (!recorded[i])
+                    if (dist[i] < 0)
                     {
                         q.Enqueue(i);
 
-                        //  Declare a distance from the start, then record it
-                        if (current == start)
-                            distance = 0;
-                        else
-                            distance = dist[current] + 1;
+                        distance = dist[current] + 1;
                         dist[i] = distance;
 
                         //  Add new list at this index if necessary
-                        if (distances.Count == distance)
-                            distances.Add(new List<int>());
-                        distances[distance].Add(i);  //  Add the student in the index that equals its distance
-                        recorded[i] = true;
+                        if (table.Count == distance)
+                            table.Add(new List<int>());
+                        table[distance].Add(i);  //  Add the student in the index that equals its distance
                     }
                 }
             }
@@ -114,11 +109,11 @@ namespace BFS_RumorMill
             //  Find all outsiders
             List<int> outsiders = new List<int>();
             for (int i = 0; i < size; i++)
-                if (!recorded[i])
+                if (dist[i] < 0)
                     outsiders.Add(i);
-            distances.Add(outsiders);
+            table.Add(outsiders);
 
-            foreach (List<int> dist_group in distances)
+            foreach (List<int> dist_group in table)
             {
                 dist_group.Sort();
                 foreach (int i in dist_group)
