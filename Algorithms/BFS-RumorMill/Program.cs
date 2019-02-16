@@ -24,7 +24,7 @@ namespace BFS_RumorMill
             //  Read each student name
             for (int i = 0; i < num_students; i++)
             {
-                students[i] = new Student(Console.ReadLine());
+                students[i] = new Student(Console.ReadLine(), i);
                 index.Add(students[i].name, i);
             }
 
@@ -37,8 +37,8 @@ namespace BFS_RumorMill
             {
                 input = Console.ReadLine().Split();
                 //  The student that has the index matching the name adds the other friend
-                students[index[input[0]]].friends.Add(index[input[1]]);
-                students[index[input[1]]].friends.Add(index[input[0]]);
+                students[index[input[0]]].friends.Add(students[index[input[1]]]);
+                students[index[input[1]]].friends.Add(students[index[input[0]]]);
             }
 
             //  Read number of rumor reports requested
@@ -55,8 +55,8 @@ namespace BFS_RumorMill
             RumorMill mill = new RumorMill();
             for (int i = 0; i < num_reports; i++)
             {
-                foreach (int stud in mill.BFS(students, reports[i])) //  Each report
-                    Console.Write(students[stud].name + " ");       //  prints each name
+                foreach (String stud in mill.BFS_2(students, students[reports[i]])) //  Each report
+                    Console.Write(stud + " ");       //  prints each name
                 Console.WriteLine();                                //  then endl
             }
 
@@ -89,7 +89,7 @@ namespace BFS_RumorMill
             while (q.Count > 0)
             {
                 int current = q.Dequeue();
-                foreach (int i in students[current].friends)
+                for (int i = 0; i < students[current].friends.Count; i++)
                 {
                     if (dist[i] < 0)
                     {
@@ -120,17 +120,83 @@ namespace BFS_RumorMill
                     yield return i;
             }
         }
+
+        public IEnumerable<string> BFS_2 (Student[] students, Student s)
+        {
+            this.students = students;
+            int size = students.Count();
+            Student[] prev = new Student[size];
+            int[] dist = new int[size];
+
+            for (int i = 0; i < size; i++)
+            {
+                dist[i] = -1;
+                prev[i] = null;
+            }
+            dist[s.index] = 0;
+
+            Queue<Student> Q = new Queue<Student>();
+            Q.Enqueue(s);
+
+            //  Record the largest distance in the connections for later use
+            int max_distance = 0;  
+
+            while (Q.Count != 0)
+            {
+                Student u = Q.Dequeue();
+                foreach (Student v in u.friends)
+                {
+                    if (dist[v.index] == -1)
+                    {
+                        Q.Enqueue(v);
+                        int distance = dist[u.index] + 1;
+                        max_distance = Math.Max(distance, max_distance);
+                        dist[v.index] = distance;
+                        prev[v.index] = u;
+                    }
+                }
+            }
+
+            //  Set distances for outsiders to 
+            max_distance++;
+            for (int i = 0; i < size; i++)
+                if (dist[i] == -1)
+                    dist[i] = max_distance;
+
+            //  Table that sets Students to an index equal to their distance from the root
+            List<List<string>> table = new List<List<string>>();
+            //  Pass through all the students and add them to table
+            for (int i = 0; i < size; i++)
+            {
+                //  Make sure there are enough indexes for all sizes
+                while (dist[i] >= table.Count)
+                    table.Add(new List<string>());
+
+                //  Add Student to group with the same distance
+                table[dist[i]].Add(students[i].name);
+            }
+
+            //  Return all students in order of 1. Distance from start; and 2. Alphabetical order
+            foreach (List<string> size_group in table)
+            {
+                size_group.Sort();
+                foreach (string stud in size_group)
+                    yield return stud;
+            }
+        }
     }
 
     public class Student
     {
         public string name { get; }
-        public List<int> friends { get; set; }
+        public int index { get; }
+        public List<Student> friends { get; set; }
 
-        public Student(string name)
+        public Student(string name, int index)
         {
             this.name = name;
-            friends = new List<int>();
+            this.index = index;
+            friends = new List<Student>();
         }
     }
 }
